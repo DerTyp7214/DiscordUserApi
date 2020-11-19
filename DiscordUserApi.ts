@@ -78,11 +78,34 @@ export type User = {
     public_flags: number;
 }
 
+export type Friend = {
+    id: string;
+    type: number;
+    nickname: string;
+    user: User;
+}
+
 export type ConnectedAccount = {
     type: string;
     id: string;
     name: string;
     verified: boolean;
+}
+
+export type AccountIntegration = {
+    id: string;
+    type: string;
+    account: { id: string; name: string; };
+    guild: { id: string; icon: string; name: string; };
+}
+
+export type PrivateConnectedAccount = ConnectedAccount & {
+    revoked: boolean;
+    visibility: number;
+    friend_sync: boolean;
+    show_activity: boolean;
+    inegrations: AccountIntegration[];
+    access_token?: string;
 }
 
 export type GuildUser = {
@@ -96,6 +119,99 @@ export type UserProfile = {
     premium_guild_since: string;
     premium_since: string;
     user: User
+}
+
+export type Subscription = {
+    canceled_at?: string;
+    created_at: string;
+    currency: string;
+    current_period_end: string;
+    current_period_start: string;
+    id: string;
+    items: {
+        id: string;
+        plan_id: string;
+        quantity: number;
+    }[];
+    payment_gateway?: string;
+    payment_gateway_plan_id: string;
+    payment_source_id: string;
+    plan_id: string;
+    status: number;
+    type: number;
+}
+
+export type BillingAddress = {
+    city: string;
+    country: string;
+    line_1?: string;
+    line_2?: string;
+    name: string;
+    postal_code: string;
+    state?: string;
+}
+
+export type PaymentSource = {
+    billing_address: BillingAddress;
+    country: string;
+    default: boolean;
+    email: string;
+    id: string;
+    invalid: boolean;
+    type: number;
+}
+
+export type ApplicationStat = {
+    application_id: string;
+    last_played_at: string;
+    total_discord_sku_duration: number;
+    total_duration: number;
+}
+
+export type Application = {
+    description: string;
+    hook: boolean;
+    icon?: string;
+    id: string;
+    name: string;
+    summary: string;
+    verify_key: string;
+}
+
+export type Sku = {
+    access_type: number;
+    application: Application;
+    application_id: string;
+    dependent_sku_id?: string;
+    features: any[];
+    flags: number;
+    id: string;
+    manifest_labels?: string;
+    name: string;
+    premium?: any;
+    release_date?: string;
+    show_age_gate: boolean;
+    slug: string;
+    type: number;
+}
+
+export type Payment = {
+    amount: number;
+    amount_refunded: number;
+    created_at: string;
+    currency: string;
+    description: string;
+    flags: number;
+    id: string;
+    payment_source: PaymentSource;
+    sku: Sku;
+    sku_id: string;
+    sku_amount: number;
+    sku_subscription_plan_id: string;
+    status: number;
+    subscription: Subscription;
+    tax: number;
+    tax_inclusive: boolean;
 }
 
 export type Attachment = {
@@ -159,13 +275,19 @@ export default class DiscordUserApi {
     private token: string
     private dev: boolean
 
+    public billing: Billing
+    public activities: Activities
+
     constructor({ channel, token, dev = false }: { channel: string; token: string; dev?: boolean }) {
         this.channel = channel
         this.token = token
         this.dev = dev
+
+        this.billing = new Billing({ channel: this.channel, token: this.token, dev: this.dev })
+        this.activities = new Activities({ channel: this.channel, token: this.token, dev: this.dev })
     }
 
-    async sendRichMessage(embed: RichMessage = {}): Promise<Message | DiscordError> {
+    async sendRichMessage(embed: RichMessage = {}): Promise<Message & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages`, {
             "headers": {
                 "accept": "*/*",
@@ -181,7 +303,7 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async editRichMessage(embed: EditRichMessage = {}): Promise<Message | DiscordError> {
+    async editRichMessage(embed: EditRichMessage = {}): Promise<Message & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${embed.messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -197,7 +319,7 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getLastMessages({ limit = 50 }: { limit: number }): Promise<Message[] | DiscordError> {
+    async getLastMessages({ limit = 50 }: { limit: number }): Promise<Message[] & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages?limit=${limit}`, {
             "headers": {
                 "accept": "*/*",
@@ -229,7 +351,7 @@ export default class DiscordUserApi {
      * 
      * @param {string} messageId - id of the message
      */
-    async getMessage({ messageId }: { messageId: string }): Promise<Message | DiscordError> {
+    async getMessage({ messageId }: { messageId: string }): Promise<Message & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -243,7 +365,7 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async pinMessage({ messageId }: { messageId: string }): Promise<any | DiscordError> {
+    async pinMessage({ messageId }: { messageId: string }): Promise<any & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/pins/${messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -287,9 +409,28 @@ export default class DiscordUserApi {
     }
 
     /**
+     * @param {string} token - this is the token the function returned last time. Can be null
+     */
+    async ack({ messageId, token }: { messageId: string; token?: string }): Promise<{ token: string } & DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}/ack`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({
+                token
+            }),
+            "method": "POST",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    /**
      * @param {string} avatar - base64 image
      */
-    async changeProfilePicture(avatar: string): Promise<Profile | DiscordError> {
+    async changeProfilePicture(avatar: string): Promise<Profile & DiscordError> {
         return await nodeFetch("https://canary.discord.com/api/v8/users/@me", {
             "headers": {
                 "accept": "*/*",
@@ -305,7 +446,33 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getUserProfile(userId: string): Promise<UserProfile | DiscordError> {
+    async getProfile(): Promise<Profile & DiscordError> {
+        return await nodeFetch("https://canary.discord.com/api/v8/users/@me", {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getFriends(): Promise<Friend[] & DiscordError> {
+        return await nodeFetch("https://canary.discord.com/api/v8/users/@me/relationships", {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getUserProfile(userId: string): Promise<UserProfile & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/users/${userId}/profile`, {
             "headers": {
                 "accept": "*/*",
@@ -317,7 +484,7 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getRelationships(userId: string): Promise<User[] | DiscordError> {
+    async getRelationships(userId: string): Promise<User[] & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/users/${userId}/relationships`, {
             "headers": {
                 "accept": "*/*",
@@ -329,7 +496,7 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getNotes(userId: string): Promise<Note | DiscordError> {
+    async getNotes(userId: string): Promise<Note & DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/notes/${userId}`, {
             "headers": {
                 "accept": "*/*",
@@ -341,19 +508,31 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async changeCustomStatus(custom_status: CustomStatus = {}): Promise<Settings> {
+    async getConnections(): Promise<PrivateConnectedAccount[] & DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/connections`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async changeCustomStatus(custom_status: CustomStatus = {}): Promise<Settings & DiscordError> {
         return await this.changeSettings({
             custom_status
         })
     }
 
-    async changeStatus(status: Status = 'dnd'): Promise<Settings> {
+    async changeStatus(status: Status = 'dnd'): Promise<Settings & DiscordError> {
         return await this.changeSettings({
             status
         })
     }
 
-    async changeSettings(settings: Settings = {}): Promise<Settings> {
+    async changeSettings(settings: Settings = {}): Promise<Settings & DiscordError> {
         return await nodeFetch("https://canary.discord.com/api/v8/users/@me/settings", {
             "headers": {
                 "accept": "*/*",
@@ -364,6 +543,99 @@ export default class DiscordUserApi {
             "body": JSON.stringify(settings),
             "method": 'PATCH',
             "mode": 'cors'
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getSettings(): Promise<Settings & DiscordError> {
+        return await nodeFetch("https://canary.discord.com/api/v8/users/@me/settings", {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "method": 'GET',
+            "mode": 'cors'
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    debug(message) {
+        console.log(message)
+    }
+}
+
+class Billing {
+    private channel: string
+    private token: string
+    private dev: boolean
+
+    constructor({ channel, token, dev }) {
+        this.channel = channel
+        this.token = token
+        this.dev = dev
+    }
+
+    async getSubscriptions(): Promise<Subscription[] & DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/billing/subscriptions`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getPaymentSources(): Promise<PaymentSource[] & DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/billing/payment-sources`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getPayments(limit: number = 20): Promise<Payment[] & DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/billing/payments?limit=${limit}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    debug(message) {
+        console.log(message)
+    }
+}
+
+class Activities {
+    private channel: string
+    private token: string
+    private dev: boolean
+
+    constructor({ channel, token, dev }) {
+        this.channel = channel
+        this.token = token
+        this.dev = dev
+    }
+
+    async getApplicationStats(): Promise<ApplicationStat[] & DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/activities/statistics/applications`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
         }).then(body => body.json()).catch(this.debug)
     }
 
