@@ -347,6 +347,25 @@ export default class DiscordUserApi {
 
     /**
      * 
+     * @warning not working currently
+     */
+    async bulkDeleteMessages(messageIds: string[]): Promise<any> {
+        if (messageIds.length === 1) return await this.deleteMessage({ messageId: messageIds[0] })
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/bulk-delete`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ messages: messageIds }),
+            "method": "POST",
+            "mode": "cors"
+        }).catch(this.debug)
+    }
+
+    /**
+     * 
      * It's a bit hacky... it tries to edit a message.
      * 
      * @param {string} messageId - id of the message
