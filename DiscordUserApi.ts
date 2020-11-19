@@ -75,9 +75,29 @@ export type User = {
     username: string;
     avatar: string;
     discriminator: string;
-    public_flags: number
-
+    public_flags: number;
 }
+
+export type ConnectedAccount = {
+    type: string;
+    id: string;
+    name: string;
+    verified: boolean;
+}
+
+export type GuildUser = {
+    id: string;
+    nick: string;
+}
+
+export type UserProfile = {
+    connected_accounts: ConnectedAccount[];
+    mutal_guilds: GuildUser[];
+    premium_guild_since: string;
+    premium_since: string;
+    user: User
+}
+
 export type Attachment = {
     id: string;
     filename: string;
@@ -85,7 +105,7 @@ export type Attachment = {
     url: string;
     proxy_url: string;
     width?: number;
-    height?: number
+    height?: number;
 }
 
 export type Message = {
@@ -109,7 +129,30 @@ export type Message = {
     code?: number;
 }
 
-export type MessageError = { message: string; code: number }
+export type Profile = {
+    avatar: string;
+    discriminator: string;
+    email: string;
+    flags: number;
+    id: string;
+    locale: string;
+    mfa_enabled: boolean;
+    nsfw_allowed: boolean;
+    phone: string;
+    premium_type: number;
+    public_flags: number;
+    token: string;
+    username: string;
+    verified: boolean;
+}
+
+export type Note = {
+    note: string;
+    note_user_id: string;
+    user_id: string;
+}
+
+export type DiscordError = { message: string; code: number }
 
 export default class DiscordUserApi {
     private channel: string
@@ -122,7 +165,7 @@ export default class DiscordUserApi {
         this.dev = dev
     }
 
-    async sendRichMessage(embed: RichMessage = {}): Promise<Message> {
+    async sendRichMessage(embed: RichMessage = {}): Promise<Message | DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages`, {
             "headers": {
                 "accept": "*/*",
@@ -138,7 +181,7 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async editRichMessage(embed: EditRichMessage = {}): Promise<Message> {
+    async editRichMessage(embed: EditRichMessage = {}): Promise<Message | DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${embed.messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -154,7 +197,7 @@ export default class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getLastMessages({ limit = 50 }: { limit: number }): Promise<Message[]> {
+    async getLastMessages({ limit = 50 }: { limit: number }): Promise<Message[] | DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages?limit=${limit}`, {
             "headers": {
                 "accept": "*/*",
@@ -186,7 +229,7 @@ export default class DiscordUserApi {
      * 
      * @param {string} messageId - id of the message
      */
-    async getMessage({ messageId }: { messageId: string }): Promise<Message | MessageError> {
+    async getMessage({ messageId }: { messageId: string }): Promise<Message | DiscordError> {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -198,6 +241,18 @@ export default class DiscordUserApi {
             "method": "PATCH",
             "mode": "cors"
         }).then(body => body.json()).catch(this.debug)
+    }
+
+    async pinMessage({ messageId }: { messageId: string }): Promise<any | DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/pins/${messageId}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+            },
+            "method": "PUT",
+            "mode": "cors"
+        }).catch(this.debug)
     }
 
     async addReaction({ messageId, emote: { name, snowflake, content } = {} }: { messageId: string; emote?: Emote }): Promise<any> {
@@ -229,6 +284,61 @@ export default class DiscordUserApi {
             await this.addReaction({ messageId, emote })
             await new Promise((res) => setTimeout(res, 50))
         }
+    }
+
+    /**
+     * @param {string} avatar - base64 image
+     */
+    async changeProfilePicture(avatar: string): Promise<Profile | DiscordError> {
+        return await nodeFetch("https://canary.discord.com/api/v8/users/@me", {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({
+                avatar
+            }),
+            "method": "PATCH",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getUserProfile(userId: string): Promise<UserProfile | DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/${userId}/profile`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getRelationships(userId: string): Promise<User[] | DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/${userId}/relationships`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getNotes(userId: string): Promise<Note | DiscordError> {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/notes/${userId}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
     }
 
     async changeCustomStatus(custom_status: CustomStatus = {}): Promise<Settings> {
