@@ -7,7 +7,8 @@
   "author": "Josua Lengwenath <lengwenath1@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node index.ts"
+    "start": "node index.js",
+    "publish": "npm publish --access public"
   },
   "dependencies": {
     "@types/node": "^14.14.8",
