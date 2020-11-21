@@ -1,14 +1,13 @@
 {
   "name": "discorduserapi",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "DiscordUserApi.js",
   "types": "DiscordUserApi.d.ts",
   "repository": "git@github.com:DerTyp7214/DiscordUserApi.git",
   "author": "Josua Lengwenath <lengwenath1@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "node index.js",
-    "publish": "npm publish --access public"
+    "start": "node index.js"
   },
   "dependencies": {
     "@types/node": "^14.14.8",
