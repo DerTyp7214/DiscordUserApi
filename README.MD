@@ -4,24 +4,16 @@ look [here](https://discord.com/developers/docs/resources/channel#embed-object) 
 
 ### Setup
 
-create a file called: `index.ts`
+simple setup, `types.d.ts` included
 
 ```typescript
-import DiscordUserApi from './DiscordUserApi.ts'
+import DiscordUserApi from 'discorduserapi'
 
 const api = new DiscordUserApi({ channel: <channelId> })
 ```
 
-### Usage
+```javascript
+const DiscordUserApi = require('discorduserapi')
 
-use autocomplete and discord docs for `args`
-
-```typescript
-api.sendRichMessage({
-    <args>
-})
+const api = new DiscordUserApi({ channel: <channelId> })
 ```
-
-all functions are returning the response from discord
-
-## To run, just type `yarn start`
