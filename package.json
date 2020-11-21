@@ -1,7 +1,8 @@
 {
-  "name": "DiscordUserApi",
+  "name": "discorduserapi",
   "version": "1.0.0",
   "main": "DiscordUserApi.js",
+  "types": "DiscordUserApi.d.ts",
   "repository": "git@github.com:DerTyp7214/DiscordUserApi.git",
   "author": "Josua Lengwenath <lengwenath1@gmail.com>",
   "license": "MIT",
