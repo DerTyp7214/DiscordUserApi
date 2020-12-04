@@ -424,6 +424,22 @@ declare type Note = {
     user_id: string;
 }
 
+declare type Login = {
+    token: string;
+    mfa: boolean;
+    sms: boolean;
+    ticket: string;
+    captcha_key: string[];
+}
+
+declare type Mfa = {
+    token: string;
+    user_settings: {
+        locale: string;
+        theme: string;
+    }
+}
+
 declare type DiscordError = {
     message: string;
     code: number
@@ -443,6 +459,10 @@ declare class DiscordUserApi {
     constructor({ guild, token, dev }: { guild: string; token: string; dev?: boolean })
 
     getMessages(channelId: string): Messages
+    login(email: string, password: string, captcha_key?: string): Promise<Login & DiscordError>
+    getRecaptcha({ port, openUrl }: { port: number, openUrl: boolean, openUrlCallback: Function, sitekey: string }): Promise<string>
+    mfa(code: number, ticket: string): Promise<Mfa & DiscordError>
+    setToken(token: string)
 }
 
 declare class Billing {

@@ -26,6 +26,77 @@ module.exports = class DiscordUserApi {
     getMessages(channelId) {
         return new Messages({ guild: this.guild, channel: channelId, token: this.token, dev: this.dev })
     }
+
+    async login(email, password, captcha_key) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/auth/login`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({
+                email,
+                password,
+                captcha_key,
+                undelete: false
+            }),
+            "method": "POST",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getRecaptcha({ port = 18742, openUrl = false, openUrlCallback = () => { }, sitekey = '6Lef5iQTAAAAAKeIvIY-DeexoO3gj7ryl9rLMEnn' }) {
+        return await nodeFetch(`https://recaptcha.net/recaptcha/api.js?render=explicit&onload=onload`).then(async body => {
+            const html = `<script>${await body.text()}</script><div class="g-recaptcha"></div><script>var onload = function () {grecaptcha.render(document.getElementsByClassName('g-recaptcha')[0], { sitekey: '${sitekey}', theme: 'dark', callback: res => fetch(\`http://localhost:${port}/\${res}\`).then(window.close) }) } </script>`
+            return new Promise((resolve) => {
+                const http = require('http')
+                let server
+                let server2
+                server = http.createServer((req, res) => {
+                    res.writeHeader(200, { 'content-type': 'text/html', 'Access-Control-Allow-Origin': '*' })
+                    resolve(req.url.substr(1))
+                    res.end()
+                    server2.close()
+                    server.close()
+                })
+                server2 = http.createServer((req, res) => {
+                    res.writeHeader(200, { 'content-type': 'text/html', 'Access-Control-Allow-Origin': '*' })
+                    res.write(html)
+                    res.end()
+                })
+                server2.listen(port - 1)
+                server.listen(port)
+                if (openUrl) require('openurl').open(`http://localhost:${port - 1}`)
+                else openUrlCallback(`http://localhost:${port - 1}`)
+            })
+        }).catch(this.debug)
+    }
+
+    async mfa(code, ticket) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/auth/mfa/totp`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({
+                code,
+                ticket
+            }),
+            "method": "POST",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    setToken(token) {
+        this.token = token
+
+        this.billing = new Billing({ guild: this.guild, token: this.token, dev: this.dev })
+        this.activities = new Activities({ guild: this.guild, token: this.token, dev: this.dev })
+        this.settings = new Settings({ guild: this.guild, token: this.token, dev: this.dev })
+        this.users = new Users({ guild: this.guild, token: this.token, dev: this.dev })
+        this.channel = new Channel({ guild: this.guild, token: this.token, dev: this.dev })
+    }
 }
 
 class Billing {
