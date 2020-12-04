@@ -9,7 +9,7 @@ module.exports = class DiscordUserApi {
     activities
     settings
     users
-    messages
+    channel
 
     constructor({ guild, token, dev = false }) {
         this.guild = guild
@@ -20,7 +20,11 @@ module.exports = class DiscordUserApi {
         this.activities = new Activities({ guild: this.guild, token: this.token, dev: this.dev })
         this.settings = new Settings({ guild: this.guild, token: this.token, dev: this.dev })
         this.users = new Users({ guild: this.guild, token: this.token, dev: this.dev })
-        this.messages = new Messages({ guild: this.guild, token: this.token, dev: this.dev })
+        this.channel = new Channel({ guild: this.guild, token: this.token, dev: this.dev })
+    }
+
+    getMessages(channelId) {
+        return new Messages({ guild: this.guild, channel: channelId, token: this.token, dev: this.dev })
     }
 }
 
@@ -99,6 +103,19 @@ class Activities {
         }).then(body => body.json()).catch(this.debug)
     }
 
+    async getAuditLog(limit = 50) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/guilds/${this.guild}/audit-logs?limit=${limit}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token
+            },
+            "body": null,
+            "method": "GET",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
     debug(message) {
         console.log(message)
     }
@@ -165,6 +182,20 @@ class Settings {
             "body": JSON.stringify({
                 nick: nick
             }),
+            "method": "PATCH",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getNick() {
+        return await nodeFetch(`https://canary.discord.com/api/v8/guilds/${this.guild}/members/@me/nick`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({}),
             "method": "PATCH",
             "mode": "cors"
         }).then(body => body.json()).catch(this.debug)
@@ -279,6 +310,56 @@ class Users {
         }).then(body => body.json()).catch(this.debug)
     }
 
+    async patchUser({ userId, channel_id, mute, deaf, roles, nick }) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/guilds/${this.guild}/members/${userId}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({
+                channel_id,
+                mute,
+                deaf,
+                roles,
+                nick
+            }),
+            "method": "PATCH",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getUser(userId) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/guilds/${this.guild}/members/${userId}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({}),
+            "method": "PATCH",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async createDm(userId) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/users/@me/channels`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({
+                recipient_id: userId
+            }),
+            "method": "POST",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
     debug(message) {
         console.log(message)
     }
@@ -286,49 +367,47 @@ class Users {
 
 class Messages {
     guild
+    channel
     token
     dev
 
-    constructor({ guild, token, dev }) {
+    constructor({ guild, channel, token, dev }) {
         this.guild = guild
+        this.channel = channel
         this.token = token
         this.dev = dev
     }
 
-    async sendRichMessage(embed = {}) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages`, {
+    async sendMessage(message = {}) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
                 "authorization": this.token,
                 "content-type": "application/json"
             },
-            "body": JSON.stringify({
-                embed
-            }),
+            "body": JSON.stringify(message),
             "method": "POST",
             "mode": "cors"
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async editRichMessage(embed = {}) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages/${embed.messageId}`, {
+    async editMessage(message = {}) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${embed.messageId}`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
                 "authorization": this.token,
                 "content-type": "application/json"
             },
-            "body": JSON.stringify({
-                embed
-            }),
+            "body": JSON.stringify(message),
             "method": "PATCH",
             "mode": "cors"
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getLastMessages({ limit = 50 }) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages?limit=${limit}`, {
+    async getLastMessages({ limit = 50 } = {}) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages?limit=${limit}`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -341,7 +420,7 @@ class Messages {
     }
 
     async deleteMessage({ messageId }) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages/${messageId}`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -359,7 +438,7 @@ class Messages {
      */
     async bulkDeleteMessages(messageIds) {
         if (messageIds.length === 1) return await this.deleteMessage({ messageId: messageIds[0] })
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages/bulk-delete`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/bulk-delete`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -379,7 +458,7 @@ class Messages {
      * @param {string} messageId - id of the message
      */
     async getMessage({ messageId }) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages/${messageId}`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -393,7 +472,7 @@ class Messages {
     }
 
     async pinMessage({ messageId }) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/pins/${messageId}`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/pins/${messageId}`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -405,7 +484,7 @@ class Messages {
     }
 
     async addReaction({ messageId, emote: { name, snowflake, content } = {} }) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages/${messageId}/reactions/${content || `${name}:${snowflake}`}/@me`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}/reactions/${content || `${name}:${snowflake}`}/@me`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -417,7 +496,7 @@ class Messages {
     }
 
     async removeReaction({ messageId, emote: { name, snowflake, content } = {} }) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages/${messageId}/reactions/${content || `${name}:${snowflake}`}/@me`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}/reactions/${content || `${name}:${snowflake}`}/@me`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -436,7 +515,7 @@ class Messages {
     }
 
     async reply(body = {}) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -453,7 +532,7 @@ class Messages {
      * @param {string} token - this is the token the function returned last time. Can be null
      */
     async ack({ messageId, token }) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.guild}/messages/${messageId}/ack`, {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}/ack`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -464,6 +543,49 @@ class Messages {
                 token
             }),
             "method": "POST",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    debug(message) {
+        console.log(message)
+    }
+}
+
+class Channel {
+    guild
+    token
+    dev
+
+    constructor({ guild, token, dev }) {
+        this.guild = guild
+        this.token = token
+        this.dev = dev
+    }
+
+    async patchChannelSettings(channelId, body) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${channelId}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify(body),
+            "method": "PATCH",
+            "mode": "cors"
+        }).then(body => body.json()).catch(this.debug)
+    }
+
+    async getChannelSettings(channelId) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${channelId}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "method": "GET",
             "mode": "cors"
         }).then(body => body.json()).catch(this.debug)
     }

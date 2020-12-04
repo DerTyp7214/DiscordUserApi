@@ -123,6 +123,27 @@ declare type User = {
     public_flags: number;
 }
 
+declare type ChannelUser = {
+    deaf: boolean;
+    is_pending: boolean;
+    joined_at: string;
+    mute: boolean;
+    nick: string;
+    pending: boolean;
+    premium_since: string;
+    roles: string[];
+    user: User
+}
+
+declare type PatchUser = {
+    userId: string;
+    channel_id?: string;
+    mute?: boolean;
+    deaf?: boolean;
+    roles?: string[];
+    nick?: string
+}
+
 declare type Friend = {
     id: string;
     type: number;
@@ -211,6 +232,54 @@ declare type ApplicationStat = {
     last_played_at: string;
     total_discord_sku_duration: number;
     total_duration: number;
+}
+
+declare type AuditLogEntry = {
+    action_type: number;
+    changes: {
+        key: string;
+        new_value: any;
+        old_value: any;
+    }[];
+    options: {
+        delete_member_days: string;
+        members_removed: string;
+        channel_id: string;
+        message_id: string;
+        count: number;
+        id: string;
+        type: string;
+        role_name: string;
+    }
+    id: string;
+    target_id: string;
+    user_id: string;
+}
+
+declare type Webhook = {
+    application_id: string;
+    avatar: string;
+    channel_id: string;
+    guild_id: string;
+    id: string;
+    name: string;
+    token: string;
+    type: number;
+    user: User
+}
+
+declare type AuditLog = {
+    audit_log_entries: AuditLogEntry[];
+    integrations: [];
+    users: User[];
+    webhooks: Webhook[];
+}
+
+declare type DmChannel = {
+    id: string;
+    type: number;
+    last_message_id: string;
+    recipients: User[]
 }
 
 declare type Application = {
@@ -313,6 +382,25 @@ declare type SendMessage = {
     flags?: number;
 }
 
+declare type ChannelSettings = {
+    bitrate: number;
+    guild_id: string;
+    id: string;
+    name: string;
+    nsfw: string;
+    parant_id: string;
+    permission_overwrites: {
+        allow: string;
+        deny: string;
+        id: string;
+        type: number;
+    }[];
+    position: number;
+    type: number;
+    user_limit: number;
+    recipients: User[];
+}
+
 declare type Profile = {
     avatar: string;
     discriminator: string;
@@ -350,9 +438,11 @@ declare class DiscordUserApi {
     public activities: Activities
     public settings: Settings
     public users: Users
-    public messages: Messages
+    public channel: Channel
 
     constructor({ guild, token, dev }: { guild: string; token: string; dev?: boolean })
+
+    getMessages(channelId: string): Messages
 }
 
 declare class Billing {
@@ -375,6 +465,7 @@ declare class Activities {
     constructor({ guild, token, dev })
 
     getApplicationStats(): Promise<ApplicationStat[] & DiscordError>
+    getAuditLog(): Promise<AuditLog & DiscordError>
 }
 
 declare class Settings {
@@ -389,6 +480,7 @@ declare class Settings {
     changeSettings(settings: SettingsType): Promise<SettingsType & DiscordError>
     getSettings(): Promise<SettingsType & DiscordError>
     nick(nick: string): Promise<NickResponse & DiscordError>
+    getNick(): Promise<NickResponse & DiscordError>
 }
 
 declare class Users {
@@ -405,17 +497,21 @@ declare class Users {
     getRelationships(userId: string): Promise<User[] & DiscordError>
     getNotes(userId: string): Promise<Note & DiscordError>
     getConnections(): Promise<PrivateConnectedAccount[] & DiscordError>
+    patchUser(body: PatchUser): Promise<ChannelUser & DiscordError>
+    getUser(userId: string): Promise<ChannelUser & DiscordError>
+    createDm(userId: string): Promise<DmChannel & DiscordError>
 }
 
 declare class Messages {
     private guild: string
+    private channel: string
     private token: string
     private dev: boolean
 
-    constructor({ guild, token, dev })
+    constructor({ guild, channel, token, dev })
 
-    sendRichMessage(embed: RichMessage): Promise<Message & DiscordError>
-    editRichMessage(embed: EditRichMessage): Promise<Message & DiscordError>
+    sendMessage(embed: SendMessage): Promise<Message & DiscordError>
+    editMessage(embed: SendMessage): Promise<Message & DiscordError>
     getLastMessages({ limit }: { limit: number }): Promise<Message[] & DiscordError>
     deleteMessage({ messageId }: { messageId: string }): Promise<any>
     bulkDeleteMessages(messageIds: string[]): Promise<any>
@@ -426,5 +522,16 @@ declare class Messages {
     addReactions({ messageId, emotes }: { messageId: string; emotes?: Emote[] }): Promise<any>
     reply(body: SendMessage): Promise<Message & DiscordError>
     ack({ messageId, token }: { messageId: string; token?: string }): Promise<{ token: string } & DiscordError>
+}
+
+declare class Channel {
+    private guild: string
+    private token: string
+    private dev: boolean
+
+    constructor({ guild, token, dev })
+
+    patchChannelSettings(channelId: string, body: ChannelSettings): Promise<ChannelSettings & DiscordError>
+    getChannelSettings(channelId: string): Promise<ChannelSettings & DiscordError>
     pins(channel: string): Promise<Message[] & DiscordError>
 }
