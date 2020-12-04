@@ -91,12 +91,16 @@ declare type SettingsType = {
     timezone_offset?: number;
 }
 
+declare type NickResponse = {
+    nick: string
+}
+
 declare type RichMessage = {
     title?: string;
     type?: string;
     description?: string;
     url?: string;
-    timestam?: any;
+    timestamp?: any;
     color?: number;
     footer?: Footer;
     image?: Image;
@@ -338,7 +342,7 @@ declare type DiscordError = {
 }
 
 declare class DiscordUserApi {
-    private channel: string
+    private guild: string
     private token: string
     private dev: boolean
 
@@ -348,15 +352,15 @@ declare class DiscordUserApi {
     public users: Users
     public messages: Messages
 
-    constructor({ channel, token, dev }: { channel: string; token: string; dev?: boolean })
+    constructor({ guild, token, dev }: { guild: string; token: string; dev?: boolean })
 }
 
 declare class Billing {
-    private channel: string
+    private guild: string
     private token: string
     private dev: boolean
 
-    constructor({ channel, token, dev })
+    constructor({ guild, token, dev })
 
     getSubscriptions(): Promise<Subscription[] & DiscordError>
     getPaymentSources(): Promise<PaymentSource[] & DiscordError>
@@ -364,34 +368,35 @@ declare class Billing {
 }
 
 declare class Activities {
-    private channel: string
+    private guild: string
     private token: string
     private dev: boolean
 
-    constructor({ channel, token, dev })
+    constructor({ guild, token, dev })
 
     getApplicationStats(): Promise<ApplicationStat[] & DiscordError>
 }
 
 declare class Settings {
-    private channel: string
+    private guild: string
     private token: string
     private dev: boolean
 
-    constructor({ channel, token, dev })
+    constructor({ guild, token, dev })
 
     changeCustomStatus(custom_status: CustomStatus): Promise<SettingsType & DiscordError>
     changeStatus(status: Status): Promise<SettingsType & DiscordError>
     changeSettings(settings: SettingsType): Promise<SettingsType & DiscordError>
     getSettings(): Promise<SettingsType & DiscordError>
+    nick(nick: string): Promise<NickResponse & DiscordError>
 }
 
 declare class Users {
-    private channel: string
+    private guild: string
     private token: string
     private dev: boolean
 
-    constructor({ channel, token, dev })
+    constructor({ guild, token, dev })
 
     changeProfilePicture(avatar: string): Promise<Profile & DiscordError>
     getProfile(): Promise<Profile & DiscordError>
@@ -403,11 +408,11 @@ declare class Users {
 }
 
 declare class Messages {
-    private channel: string
+    private guild: string
     private token: string
     private dev: boolean
 
-    constructor({ channel, token, dev })
+    constructor({ guild, token, dev })
 
     sendRichMessage(embed: RichMessage): Promise<Message & DiscordError>
     editRichMessage(embed: EditRichMessage): Promise<Message & DiscordError>
@@ -421,4 +426,5 @@ declare class Messages {
     addReactions({ messageId, emotes }: { messageId: string; emotes?: Emote[] }): Promise<any>
     reply(body: SendMessage): Promise<Message & DiscordError>
     ack({ messageId, token }: { messageId: string; token?: string }): Promise<{ token: string } & DiscordError>
+    pins(channel: string): Promise<Message[] & DiscordError>
 }
