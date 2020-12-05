@@ -9,7 +9,6 @@ module.exports = class DiscordUserApi {
     activities
     settings
     users
-    channel
 
     constructor({ guild, token, dev = false }) {
         this.guild = guild
@@ -20,11 +19,14 @@ module.exports = class DiscordUserApi {
         this.activities = new Activities({ guild: this.guild, token: this.token, dev: this.dev })
         this.settings = new Settings({ guild: this.guild, token: this.token, dev: this.dev })
         this.users = new Users({ guild: this.guild, token: this.token, dev: this.dev })
-        this.channel = new Channel({ guild: this.guild, token: this.token, dev: this.dev })
     }
 
     getMessages(channelId) {
         return new Messages({ guild: this.guild, channel: channelId, token: this.token, dev: this.dev })
+    }
+
+    getChannel(channelId) {
+        return new Channel({ guild: this.guild, channel: channelId, token: this.token, dev: this.dev })
     }
 
     async login(email, password, captcha_key) {
@@ -32,7 +34,8 @@ module.exports = class DiscordUserApi {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
-                "content-type": "application/json"
+                "content-type": "application/json",
+                "authorization": this.token
             },
             "body": JSON.stringify({
                 email,
@@ -95,7 +98,6 @@ module.exports = class DiscordUserApi {
         this.activities = new Activities({ guild: this.guild, token: this.token, dev: this.dev })
         this.settings = new Settings({ guild: this.guild, token: this.token, dev: this.dev })
         this.users = new Users({ guild: this.guild, token: this.token, dev: this.dev })
-        this.channel = new Channel({ guild: this.guild, token: this.token, dev: this.dev })
     }
 }
 
@@ -626,16 +628,18 @@ class Messages {
 class Channel {
     guild
     token
+    channelId
     dev
 
-    constructor({ guild, token, dev }) {
+    constructor({ guild, channel, token, dev }) {
         this.guild = guild
         this.token = token
+        this.channelId = channel
         this.dev = dev
     }
 
-    async patchChannelSettings(channelId, body) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${channelId}`, {
+    async patchChannelSettings(body) {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channelId}`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -648,8 +652,8 @@ class Channel {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getChannelSettings(channelId) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${channelId}`, {
+    async getChannelSettings() {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channelId}`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",
@@ -661,8 +665,8 @@ class Channel {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async pins(channel) {
-        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${channel}/pins`, {
+    async pins() {
+        return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channelId}/pins`, {
             "headers": {
                 "accept": "*/*",
                 "accept-language": "en-US",

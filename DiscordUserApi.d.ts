@@ -387,6 +387,7 @@ declare type ChannelSettings = {
     guild_id: string;
     id: string;
     name: string;
+    topic: string;
     nsfw: string;
     parant_id: string;
     permission_overwrites: {
@@ -454,11 +455,11 @@ declare class DiscordUserApi {
     public activities: Activities
     public settings: Settings
     public users: Users
-    public channel: Channel
 
     constructor({ guild, token, dev }: { guild: string; token: string; dev?: boolean })
 
     getMessages(channelId: string): Messages
+    getChannel(channelId: string): Channel
     login(email: string, password: string, captcha_key?: string): Promise<Login & DiscordError>
     getRecaptcha({ port, openUrl }: { port: number, openUrl: boolean, openUrlCallback: Function, sitekey: string }): Promise<string>
     mfa(code: number, ticket: string): Promise<Mfa & DiscordError>
@@ -546,12 +547,13 @@ declare class Messages {
 
 declare class Channel {
     private guild: string
+    private channelId: string
     private token: string
     private dev: boolean
 
-    constructor({ guild, token, dev })
+    constructor({ guild, channel, token, dev })
 
-    patchChannelSettings(channelId: string, body: ChannelSettings): Promise<ChannelSettings & DiscordError>
-    getChannelSettings(channelId: string): Promise<ChannelSettings & DiscordError>
-    pins(channel: string): Promise<Message[] & DiscordError>
+    patchChannelSettings(body: ChannelSettings): Promise<ChannelSettings & DiscordError>
+    getChannelSettings(): Promise<ChannelSettings & DiscordError>
+    pins(): Promise<Message[] & DiscordError>
 }
