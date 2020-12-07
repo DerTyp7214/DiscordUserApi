@@ -372,6 +372,7 @@ declare type SendMessage = {
     content?: string;
     attachments?: Attachment[];
     embeds?: RichMessage[];
+    embed?: RichMessage;
     mentions?: User[];
     mention_roles?: string[];
     pinned?: boolean;

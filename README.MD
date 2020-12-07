@@ -11,11 +11,11 @@ to get your discord token, just simply open discord and press ctrl+shift+i. Then
 ```typescript
 import DiscordUserApi from 'discorduserapi'
 
-const api = new DiscordUserApi({ channel: <channelId>, token: <your discord token> })
+const api = new DiscordUserApi({ guild: <guildId>, token: <your discord token> })
 ```
 
 ```javascript
 const DiscordUserApi = require('discorduserapi')
 
-const api = new DiscordUserApi({ channel: <channelId>, token: <your discord token> })
+const api = new DiscordUserApi({ guild: <guildId>, token: <your discord token> })
 ```
