@@ -111,10 +111,6 @@ declare type RichMessage = {
     fields?: Field[];
 }
 
-declare type EditRichMessage = {
-    messageId?: string;
-} & RichMessage
-
 declare type User = {
     id: string;
     username: string;
