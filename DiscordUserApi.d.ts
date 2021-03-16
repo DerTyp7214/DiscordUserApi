@@ -49,7 +49,7 @@ declare type Status = 'dnd' | 'online' | 'idle' | 'invisible'
 
 declare type CustomStatus = {
     text?: string;
-    empji_id?: string, emoji_name?: string;
+    emoji_id?: string, emoji_name?: string;
     expires_at?: string
 }
 
@@ -166,7 +166,7 @@ declare type PrivateConnectedAccount = ConnectedAccount & {
     visibility: number;
     friend_sync: boolean;
     show_activity: boolean;
-    inegrations: AccountIntegration[];
+    integrations: AccountIntegration[];
     access_token?: string;
 }
 
@@ -340,6 +340,17 @@ declare type MessageReference = {
     message_id: string;
 }
 
+declare type Emoji = {
+    id: string;
+    name: string;
+}
+
+declare type Reaction = {
+    count: number;
+    me: boolean;
+    emoji: Emoji
+}
+
 declare type Message = {
     id: string;
     type: number;
@@ -358,6 +369,7 @@ declare type Message = {
     timestamp: string;
     edited_timestamp?: string;
     flags: number;
+    reactions: Reaction[]
 
     message?: string;
     code?: number;
