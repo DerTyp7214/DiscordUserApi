@@ -10,23 +10,23 @@ module.exports = class DiscordUserApi {
     settings
     users
 
-    constructor({ guild, token, dev = false }) {
+    constructor({guild, token, dev = false}) {
         this.guild = guild
         this.token = token
         this.dev = dev
 
-        this.billing = new Billing({ guild: this.guild, token: this.token, dev: this.dev })
-        this.activities = new Activities({ guild: this.guild, token: this.token, dev: this.dev })
-        this.settings = new Settings({ guild: this.guild, token: this.token, dev: this.dev })
-        this.users = new Users({ guild: this.guild, token: this.token, dev: this.dev })
+        this.billing = new Billing({guild: this.guild, token: this.token, dev: this.dev})
+        this.activities = new Activities({guild: this.guild, token: this.token, dev: this.dev})
+        this.settings = new Settings({guild: this.guild, token: this.token, dev: this.dev})
+        this.users = new Users({guild: this.guild, token: this.token, dev: this.dev})
     }
 
     getMessages(channelId) {
-        return new Messages({ guild: this.guild, channel: channelId, token: this.token, dev: this.dev })
+        return new Messages({guild: this.guild, channel: channelId, token: this.token, dev: this.dev})
     }
 
     getChannel(channelId) {
-        return new Channel({ guild: this.guild, channel: channelId, token: this.token, dev: this.dev })
+        return new Channel({guild: this.guild, channel: channelId, token: this.token, dev: this.dev})
     }
 
     async login(email, password, captcha_key) {
@@ -48,7 +48,10 @@ module.exports = class DiscordUserApi {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getRecaptcha({ port = 18742, openUrl = false, openUrlCallback = () => { }, sitekey = '6Lef5iQTAAAAAKeIvIY-DeexoO3gj7ryl9rLMEnn' }) {
+    async getRecaptcha({
+                           port = 18742, openUrl = false, openUrlCallback = () => {
+        }, sitekey = '6Lef5iQTAAAAAKeIvIY-DeexoO3gj7ryl9rLMEnn'
+                       }) {
         return await nodeFetch(`https://recaptcha.net/recaptcha/api.js?render=explicit&onload=onload`).then(async body => {
             const html = `<script>${await body.text()}</script><div class="g-recaptcha"></div><script>var onload = function () {grecaptcha.render(document.getElementsByClassName('g-recaptcha')[0], { sitekey: '${sitekey}', theme: 'dark', callback: res => fetch(\`http://localhost:${port}/\${res}\`).then(window.close) }) } </script>`
             return new Promise((resolve) => {
@@ -56,14 +59,14 @@ module.exports = class DiscordUserApi {
                 let server
                 let server2
                 server = http.createServer((req, res) => {
-                    res.writeHeader(200, { 'content-type': 'text/html', 'Access-Control-Allow-Origin': '*' })
+                    res.writeHeader(200, {'content-type': 'text/html', 'Access-Control-Allow-Origin': '*'})
                     resolve(req.url.substr(1))
                     res.end()
                     server2.close()
                     server.close()
                 })
                 server2 = http.createServer((req, res) => {
-                    res.writeHeader(200, { 'content-type': 'text/html', 'Access-Control-Allow-Origin': '*' })
+                    res.writeHeader(200, {'content-type': 'text/html', 'Access-Control-Allow-Origin': '*'})
                     res.write(html)
                     res.end()
                 })
@@ -94,10 +97,10 @@ module.exports = class DiscordUserApi {
     setToken(token) {
         this.token = token
 
-        this.billing = new Billing({ guild: this.guild, token: this.token, dev: this.dev })
-        this.activities = new Activities({ guild: this.guild, token: this.token, dev: this.dev })
-        this.settings = new Settings({ guild: this.guild, token: this.token, dev: this.dev })
-        this.users = new Users({ guild: this.guild, token: this.token, dev: this.dev })
+        this.billing = new Billing({guild: this.guild, token: this.token, dev: this.dev})
+        this.activities = new Activities({guild: this.guild, token: this.token, dev: this.dev})
+        this.settings = new Settings({guild: this.guild, token: this.token, dev: this.dev})
+        this.users = new Users({guild: this.guild, token: this.token, dev: this.dev})
     }
 }
 
@@ -106,7 +109,7 @@ class Billing {
     token
     dev
 
-    constructor({ guild, token, dev }) {
+    constructor({guild, token, dev}) {
         this.guild = guild
         this.token = token
         this.dev = dev
@@ -158,7 +161,7 @@ class Activities {
     token
     dev
 
-    constructor({ guild, token, dev }) {
+    constructor({guild, token, dev}) {
         this.guild = guild
         this.token = token
         this.dev = dev
@@ -199,7 +202,7 @@ class Settings {
     token
     dev
 
-    constructor({ guild, token, dev }) {
+    constructor({guild, token, dev}) {
         this.guild = guild
         this.token = token
         this.dev = dev
@@ -284,7 +287,7 @@ class Users {
     token
     dev
 
-    constructor({ guild, token, dev }) {
+    constructor({guild, token, dev}) {
         this.guild = guild
         this.token = token
         this.dev = dev
@@ -383,7 +386,7 @@ class Users {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async patchUser({ userId, channel_id, mute, deaf, roles, nick }) {
+    async patchUser({userId, channel_id, mute, deaf, roles, nick}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/guilds/${this.guild}/members/${userId}`, {
             "headers": {
                 "accept": "*/*",
@@ -444,7 +447,7 @@ class Messages {
     token
     dev
 
-    constructor({ guild, channel, token, dev }) {
+    constructor({guild, channel, token, dev}) {
         this.guild = guild
         this.channel = channel
         this.token = token
@@ -479,7 +482,7 @@ class Messages {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async getLastMessages({ limit = 50 } = {}) {
+    async getLastMessages({limit = 50} = {}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages?limit=${limit}`, {
             "headers": {
                 "accept": "*/*",
@@ -492,7 +495,21 @@ class Messages {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async deleteMessage({ messageId }) {
+    async getReactions({limit = 100, emoteName, emoteSnowflake, messageId}) {
+        return await nodeFetch(`https://discord.com/api/v8/channels/${this.channel}/messages/${messageId}/reactions/${emoteName}:${emoteSnowflake}?limit=${limit}`, {
+            "headers": {
+                "accept": "*/*",
+                "accept-language": "de",
+                "authorization": this.token,
+                "content-type": "application/json"
+            },
+            "body": null,
+            "method": "GET",
+            "mode": "cors"
+        });
+    }
+
+    async deleteMessage({messageId}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -506,11 +523,11 @@ class Messages {
     }
 
     /**
-     * 
+     *
      * @warning not working currently
      */
     async bulkDeleteMessages(messageIds) {
-        if (messageIds.length === 1) return await this.deleteMessage({ messageId: messageIds[0] })
+        if (messageIds.length === 1) return await this.deleteMessage({messageId: messageIds[0]})
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/bulk-delete`, {
             "headers": {
                 "accept": "*/*",
@@ -518,19 +535,19 @@ class Messages {
                 "authorization": this.token,
                 "content-type": "application/json"
             },
-            "body": JSON.stringify({ messages: messageIds }),
+            "body": JSON.stringify({messages: messageIds}),
             "method": "POST",
             "mode": "cors"
         }).catch(this.debug)
     }
 
     /**
-     * 
+     *
      * It's a bit hacky... it tries to edit a message.
-     * 
+     *
      * @param {string} messageId - id of the message
      */
-    async getMessage({ messageId }) {
+    async getMessage({messageId}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -544,7 +561,7 @@ class Messages {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async pinMessage({ messageId }) {
+    async pinMessage({messageId}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/pins/${messageId}`, {
             "headers": {
                 "accept": "*/*",
@@ -556,7 +573,7 @@ class Messages {
         }).catch(this.debug)
     }
 
-    async addReaction({ messageId, emote: { name, snowflake, content } = {} }) {
+    async addReaction({messageId, emote: {name, snowflake, content} = {}}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}/reactions/${content || `${name}:${snowflake}`}/@me`, {
             "headers": {
                 "accept": "*/*",
@@ -568,7 +585,7 @@ class Messages {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async removeReaction({ messageId, emote: { name, snowflake, content } = {} }) {
+    async removeReaction({messageId, emote: {name, snowflake, content} = {}}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}/reactions/${content || `${name}:${snowflake}`}/@me`, {
             "headers": {
                 "accept": "*/*",
@@ -580,9 +597,9 @@ class Messages {
         }).then(body => body.json()).catch(this.debug)
     }
 
-    async addReactions({ messageId, emotes = [] }) {
+    async addReactions({messageId, emotes = []}) {
         for (let emote of emotes) {
-            await this.addReaction({ messageId, emote })
+            await this.addReaction({messageId, emote})
             await new Promise((res) => setTimeout(res, 50))
         }
     }
@@ -604,7 +621,7 @@ class Messages {
     /**
      * @param {string} token - this is the token the function returned last time. Can be null
      */
-    async ack({ messageId, token }) {
+    async ack({messageId, token}) {
         return await nodeFetch(`https://canary.discord.com/api/v8/channels/${this.channel}/messages/${messageId}/ack`, {
             "headers": {
                 "accept": "*/*",
@@ -631,7 +648,7 @@ class Channel {
     channelId
     dev
 
-    constructor({ guild, channel, token, dev }) {
+    constructor({guild, channel, token, dev}) {
         this.guild = guild
         this.token = token
         this.channelId = channel

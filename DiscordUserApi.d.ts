@@ -543,6 +543,7 @@ declare class Messages {
     sendMessage(embed: SendMessage): Promise<Message & DiscordError>
     editMessage(embed: SendMessage): Promise<Message & DiscordError>
     getLastMessages({ limit }: { limit: number }): Promise<Message[] & DiscordError>
+    getReactions({ limit, emoteName, emoteSnowflake, messageId }: { limit: number, emoteName: string, emoteSnowflake: string, messageId: string }): Promise<Reaction[]>
     deleteMessage({ messageId }: { messageId: string }): Promise<any>
     bulkDeleteMessages(messageIds: string[]): Promise<any>
     getMessage({ messageId }: { messageId: string }): Promise<Message & DiscordError>
