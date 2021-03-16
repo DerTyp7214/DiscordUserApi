@@ -1,6 +1,6 @@
 {
   "name": "discorduserapi",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "main": "DiscordUserApi.js",
   "types": "DiscordUserApi.d.ts",
   "repository": "github.com:DerTyp7214/DiscordUserApi",
