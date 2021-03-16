@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node index.js",
-    "pub": "yarn publish"
+    "pub": "git add . && git commit -m publish && yarn publish"
   },
   "dependencies": {
     "@types/node": "^14.14.8",

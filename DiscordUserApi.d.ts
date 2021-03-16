@@ -351,6 +351,14 @@ declare type Reaction = {
     emoji: Emoji
 }
 
+declare type ReactionUser = {
+    id: string;
+    username: string;
+    avatar?: string;
+    discriminator: string;
+    public_flags: number;
+}
+
 declare type Message = {
     id: string;
     type: number;
@@ -543,7 +551,7 @@ declare class Messages {
     sendMessage(embed: SendMessage): Promise<Message & DiscordError>
     editMessage(embed: SendMessage): Promise<Message & DiscordError>
     getLastMessages({ limit }: { limit: number }): Promise<Message[] & DiscordError>
-    getReactions({ limit, emoteName, emoteSnowflake, messageId }: { limit: number, emoteName: string, emoteSnowflake: string, messageId: string }): Promise<Reaction[]>
+    getReactions({ limit, emoteName, emoteSnowflake, messageId }: { limit: number, emoteName: string, emoteSnowflake: string, messageId: string }): Promise<ReactionUser[]>
     deleteMessage({ messageId }: { messageId: string }): Promise<any>
     bulkDeleteMessages(messageIds: string[]): Promise<any>
     getMessage({ messageId }: { messageId: string }): Promise<Message & DiscordError>
