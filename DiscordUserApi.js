@@ -506,7 +506,7 @@ class Messages {
             "body": null,
             "method": "GET",
             "mode": "cors"
-        });
+        }).then(body => body.json()).catch(this.debug)
     }
 
     async deleteMessage({messageId}) {
